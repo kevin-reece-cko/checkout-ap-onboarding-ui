@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import './App.css';
-
 import Form from "react-jsonschema-form";
-
 import axios from "axios";
+
+import './App.css';
 
 class App extends Component
 {
@@ -11,8 +10,7 @@ class App extends Component
   {
     super(props);
     this.state = {
-      //url: "http://dev-gateway-internal.cko.lon/giropay-internal/",
-      url: "http://localhost:5000/",
+      url: "http://dev-gateway-internal.cko.lon/giropay-internal/",
       apiKey: "084b7fa3-8d81-46e3-aba2-66efb80fb083",
       businessId: 100001,
       onboarded: false,
@@ -24,30 +22,26 @@ class App extends Component
   }
 
   urlChanged = (event) => {
-    this.state.url = event.target.value;
-    this.setState((this.state));
+    this.setState({...this.state, 'url': event.target.value});
     this.getSchema();
   }
 
   apiKeyChanged = (event) => {
-    this.state.apiKey = event.target.value;
-    this.setState(this.state);
+    this.setState({...this.state, 'apiKey': event.target.value});
     this.getSchema();
   }
 
   businessIdChanged = (event) => {
-    this.state.businessId = event.target.value;
-    this.setState(this.state);
+    this.setState({...this.state, 'businessId': event.target.value});
     this.getSchema();
   };
 
   dataChange = (event) => {
-    this.state.data = event.formData;
-    this.setState(this.state);
+    this.setState({...this.state, 'data': event.formData});
   }
 
   onboardBusiness = async (event) => {
-    let response = await axios.put(
+    await axios.put(
       this.businessLink, 
       this.state.data,
       {
@@ -57,12 +51,11 @@ class App extends Component
       }
     );
 
-    this.state.onboarded = true;
-    this.setState(this.state);
+    this.setState({...this.state, 'onboarded': true});
   };
 
   updateBusiness = async (event) => {
-    let response = await axios.put(
+    await axios.put(
       this.businessLink, 
       this.state.data,
       {
@@ -74,7 +67,7 @@ class App extends Component
   };
 
   offboardBusiness = async (event) => {
-    let response = await axios.delete(
+    await axios.delete(
       this.businessLink, 
       {
         headers: {
@@ -82,8 +75,8 @@ class App extends Component
         }
       }
     );
-    this.state.onboarded = false;
-    this.setState(this.state);
+    
+    this.setState({...this.state, 'onboarded': false});
   };
 
   getSchema = async () => {
@@ -94,11 +87,10 @@ class App extends Component
     });
 
     let links = rootResponse.data._links;
-    let gwCurie = links.curies.find(l => l.name == "gw");
+    let gwCurie = links.curies.find(l => l.name === "gw");
     let onboardLink = links.onboard.href;
-    console.log(links);
+    
     let onboardRelLink = gwCurie.href.replace("{rel}", "onboard");
-
     let onboardLinkResponse = await axios.get(onboardRelLink, {
       headers: {
         "Authorization": this.state.apiKey
@@ -123,20 +115,15 @@ class App extends Component
         "Authorization": this.state.apiKey
       }
     });
-    console.log(businessResponse);
     
-    this.state.onboarded = businessResponse.status == 200;
-    if(this.state.onboarded)
-    {
-      this.state.data = businessResponse.data;
-    } else
-    {
-      this.state.data = {};
-    }
-
-    this.state.schema = requestDataResponse.data;
     
-    this.setState(this.state);
+    let onboarded = businessResponse.status === 200;
+    this.setState({
+      ...this.state, 
+      'onboarded': onboarded,
+      'data': onboarded ? businessResponse.data : {},
+      'schema': requestDataResponse.data
+    });
   }
 
   log = (type) => console.log.bind(console, type);
