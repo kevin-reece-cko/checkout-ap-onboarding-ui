@@ -1,5 +1,15 @@
 # checkout-ap-onboarding-ui
 
+
+## Demo
+
+
+http://checkout-ap-onboarding-ui.s3-website.eu-west-2.amazonaws.com/
+
+If you're connected to the London VPN the site automatically get's the Onboarding schema from Giropay Dev instance.
+
+## About
+
 This is a generic onboarding client for AP services implementing the `onboard` link relation as outlined in the corresponding chapter of the [AP specification](https://github.com/CKOTech/checkout-ap/tree/feature/onboarding#onboarding).
 
 It uses [react-jsonschema-form](https://github.com/mozilla-services/react-jsonschema-form) to dynamically render the input forms of the necessary onboarding fields.
@@ -19,7 +29,13 @@ You'll note that this is still quiet a big hackery:
 - This implementation only covers the very-happy path so far. No error checks whatsoever
 - My first ever React app. Yay!
 
+## Deploy to S3
+
+TODO
+
 ## Deploy on GitHub pages
+
+Note: Currently GitHub pages hosting doesn't work, since it only supports HTTPS and we run into Mixed Content issues.
 
 A nice way of deploying to gh-pages has been described [here](http://pressedpixels.com/articles/deploying-to-github-pages-with-git-worktree/).
 
