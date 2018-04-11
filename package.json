@@ -2,7 +2,7 @@
   "name": "checkout-ap-onboarding-ui",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://daniel-munch-cko.github.io/checkout-ap-onboarding-ui/",
+  "homepage": "http://checkout-ap-onboarding-ui.s3-website.eu-west-2.amazonaws.com/",
   "dependencies": {
     "axios": "^0.18.0",
     "react": "^16.3.1",
