@@ -14,6 +14,8 @@ This is a generic onboarding client for AP services implementing the `onboard` l
 
 It uses [react-jsonschema-form](https://github.com/mozilla-services/react-jsonschema-form) to dynamically render the input forms of the necessary onboarding fields.
 
+## JSON Schema fetching
+
 It uses curies to fetch the actual JSON Schema files through the `onboard` link relation. If `$APService` is the URL of the actual AP service the following request are made:
 
  - `GET $APService/` - Root discovery, checks for `onboard` link relation.
