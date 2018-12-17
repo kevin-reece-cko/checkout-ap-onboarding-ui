@@ -1,43 +1,86 @@
 import React, { Component } from 'react';
-import Form from "react-jsonschema-form";
-import axios from "axios";
+import Form from 'react-jsonschema-form';
+import axios from 'axios';
+import Dropdown from 'react-dropdown'
 
 import './App.css';
+import 'react-dropdown/style.css'
 
 class App extends Component
 {
-  constructor(props)
-  {
+  environmentSettings = {
+      'Local': {
+        'Klarna': {
+          url: 'http://localhost:5050',
+          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
+        }, 
+        'iDEAL': {
+          url: 'http://localhost:5051',
+          apiKey: 'fc06ac3a-f3b0-4656-9e05-61cb8129c621'
+        }
+      },
+      'QA': {
+        'Klarna': {
+          url: 'http://qa-gateway-internal.cko.lon/klarna-internal/',
+          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
+        }, 
+        'iDEAL': {
+          url: 'http://qa-gateway-internal.cko.lon/ideal-internal/',
+          apiKey: 'fc06ac3a-f3b0-4656-9e05-61cb8129c621'
+        }, 
+        'GiroPay': {
+          url: 'http://qa-gateway-internal.cko.lon/giropay-internal/',
+          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
+        }
+      }
+    }
+
+  constructor(props) {
     super(props);
+    const defaultEnvironment = 'Local';
+    const defaultApType = 'Klarna';
+    const selectedApSettings = this.environmentSettings[defaultEnvironment][defaultApType];
     this.state = {
-      url: "http://dev-gateway-internal.cko.lon/giropay-internal/",
-      apiKey: "084b7fa3-8d81-46e3-aba2-66efb80fb083",
+      environment: defaultEnvironment, 
+      apType: defaultApType, 
+      url: selectedApSettings.url, 
+      apiKey: selectedApSettings.apiKey,
       businessId: 100001,
       onboarded: false,
       schema: {},
       data: {}
     }
-    this.businessLink = "";
-    this.getSchema();
+    this.businessLink = '';
+    this._getSchema();
   }
 
-  urlChanged = (event) => {
-    this.setState({...this.state, 'url': event.target.value});
-    this.getSchema();
+  environmentChanged = async (event) => {
+    await this._setStateForEnvironmentAp(event.value, this.state.apType);
+    this._getSchema();
   }
 
-  apiKeyChanged = (event) => {
-    this.setState({...this.state, 'apiKey': event.target.value});
-    this.getSchema();
+  apTypeChanged = async (event) => {
+    await this._setStateForEnvironmentAp(this.state.environment, event.value);
+    this._getSchema();
   }
 
-  businessIdChanged = (event) => {
-    this.setState({...this.state, 'businessId': event.target.value});
-    this.getSchema();
+  urlChanged = async (event) => {
+    await this.setState({...this.state, url: event.target.value});
+    this._getSchema();
+  }
+
+  apiKeyChanged = async (event) => {
+    await this.setState({...this.state, apiKey: event.target.value});
+    this._getSchema();
+  }
+
+  businessIdChanged = async (event) => {
+    await this.setState({...this.state, businessId: event.target.value});
+    this._getSchema();
   };
 
-  dataChange = (event) => {
-    this.setState({...this.state, 'data': event.formData});
+  dataChange = async (event) => {
+    await this.setState({...this.state, data: event.formData});
   }
 
   onboardBusiness = async (event) => {
@@ -46,12 +89,12 @@ class App extends Component
       this.state.data,
       {
         headers: {
-          "Authorization": this.state.apiKey
+          'Authorization': this.state.apiKey
         }
       }
     );
 
-    this.setState({...this.state, 'onboarded': true});
+    this.setState({...this.state, onboarded: true});
   };
 
   updateBusiness = async (event) => {
@@ -60,7 +103,7 @@ class App extends Component
       this.state.data,
       {
         headers: {
-          "Authorization": this.state.apiKey
+          'Authorization': this.state.apiKey
         }
       }
     );
@@ -71,83 +114,151 @@ class App extends Component
       this.businessLink, 
       {
         headers: {
-          "Authorization": this.state.apiKey
+          'Authorization': this.state.apiKey
         }
       }
     );
     
-    this.setState({...this.state, 'onboarded': false});
+    this.setState({...this.state, onboarded: false});
   };
 
-  getSchema = async () => {
-    let rootResponse = await axios.get(this.state.url, {
-      headers: {
-        "Authorization": this.state.apiKey
-      }
-    });
+  log = (type) => console.log.bind(console, type);
 
-    let links = rootResponse.data._links;
-    let gwCurie = links.curies.find(l => l.name === "gw");
-    let onboardLink = links.onboard.href;
-    
-    let onboardRelLink = gwCurie.href.replace("{rel}", "onboard");
-    let onboardLinkResponse = await axios.get(onboardRelLink, {
-      headers: {
-        "Authorization": this.state.apiKey
-      }
-    });
+  _setStateForEnvironmentAp = async (environment, apType) => {
+    const selectedApSettings = this.environmentSettings[environment][apType];
+    if (selectedApSettings) {
+      await this.setState({...this.state, 
+        environment: environment, 
+        apType: apType, 
+        url: selectedApSettings.url, 
+        apiKey: selectedApSettings.apiKey
+      });
+    } else {
+      await this.setState({...this.state, 
+        environment: environment, 
+        apType: ''
+      });
+    }
+  }
 
-    let requestDataRef = onboardLinkResponse.data.put.parameters[0].schema["$ref"];
+  _getEnvironmentOptions() {
+    return Object.keys(this.environmentSettings);
+  }
+  
+  _getApTypeOptions() {
+    return Object.keys(this.environmentSettings[this.state.environment]);
+  }
 
-    let requestDataResponse = await axios.get(onboardRelLink + "/" + requestDataRef, {
-      headers: {
-        "Authorization": this.state.apiKey
-      }
-    });
-
-
-    this.businessLink = onboardLink.replace("{businessId}", this.state.businessId);
-
-    let businessResponse = await axios.get(this.businessLink, {
-      //we don't want axios to throw an exception on any status code... weird behaviour
-      validateStatus: status => true,
-      headers: {
-        "Authorization": this.state.apiKey
-      }
-    });
-    
-    
-    let onboarded = businessResponse.status === 200;
+  _getSchema = async () => {
+    const rootResponse = await this._getRootResponse();
+    const links = rootResponse.data._links;
+    const onboardLinkResponse = await this._getOnboardRelationResponse(links);
+    const businessResponse = await this._getBusinessResponse(links);
+    const requestBodySchema = this._buildRequestParametersFromSpec(onboardLinkResponse.data);
+    const onboarded = businessResponse.status === 200;
     this.setState({
       ...this.state, 
-      'onboarded': onboarded,
-      'data': onboarded ? businessResponse.data : {},
-      'schema': requestDataResponse.data
+      onboarded: onboarded,
+      data: onboarded ? businessResponse.data : {},
+      schema: requestBodySchema
     });
   }
 
-  log = (type) => console.log.bind(console, type);
+  _getRootResponse = async () => {
+    return await axios.get(this.state.url, {
+      headers: {
+        'Authorization': this.state.apiKey
+      }
+    });
+  }
+
+  _getBusinessResponse = async (links) => {
+    const onboardLink = links.onboard.href;
+    this.businessLink = onboardLink.replace('{businessId}', this.state.businessId);
+    return await axios.get(this.businessLink, {
+      //we don't want axios to throw an exception on any status code... weird behaviour
+      validateStatus: status => true,
+      headers: {
+        'Authorization': this.state.apiKey
+      }
+    });
+  }
+
+  _getOnboardRelationResponse = async (links) => {
+    //TODO: add a root curie to api middleware:
+    //const rootCurie = links.curies.find(l => l.name === '');
+    //const onboardRelLink = rootCurie.href.replace('{rel}', 'onboard');
+    const onboardRelLink = this.state.url + '/relations/onboard';
+    return await axios.get(onboardRelLink, {
+      headers: {
+        'Authorization': this.state.apiKey
+      }
+    });
+  }
+
+  _buildRequestParametersFromSpec = (onboardSpec) => {
+    const parametersSchema = onboardSpec.put.requestBody.content['application/json'].schema;
+    let requestParameters;
+    if (parametersSchema.allOf) {
+      requestParameters = this._mergeAllOfProperties(parametersSchema);
+    } else {
+      requestParameters = parametersSchema;
+    }
+    this._setPropertyExamplesAsUiDefault(requestParameters);
+    return requestParameters;
+  };
+
+  _mergeAllOfProperties = (parametersSchema) => {
+    if (parametersSchema.allOf.length === 0) {
+      return {};
+    }
+    const mergedParameters = parametersSchema.allOf[0];
+    parametersSchema.allOf.slice(1).forEach(parameterSet => {
+      mergedParameters.required = mergedParameters.required.concat(parameterSet.required);
+      mergedParameters.properties = {...mergedParameters.properties, ...parameterSet.properties};
+    });
+    return mergedParameters;
+  }
+
+  _setPropertyExamplesAsUiDefault = (requestParameters) => {
+    for(var propertyName in requestParameters.properties) {
+      const property = requestParameters.properties[propertyName];
+      property.default = property.default || property.example;
+    }
+  }
 
   render() {
     return (
       <div>
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <span class="input-group-text" id="basic-addon3">AP Service root URL</span>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text" id="basic-addon3">Environment</span>
         </div>
-        <input type="text" value={this.state.url} onChange={this.urlChanged} class="form-control" id="root-url" aria-describedby="basic-addon3"/>
+        <Dropdown options={this._getEnvironmentOptions()} onChange={this.environmentChanged} value={this.state.environment} className="fit-to-container form-control" placeholder="Select an option" />
       </div>
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <span class="input-group-text" id="basic-addon3">API Key</span>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text" id="basic-addon3">Alternative Payment Type</span>
         </div>
-        <input type="text" value={this.state.apiKey} onChange={this.apiKeyChanged} class="form-control" id="api-key" aria-describedby="basic-addon3"/>
+        <Dropdown options={this._getApTypeOptions()} onChange={this.apTypeChanged} value={this.state.apType} className="fit-to-container form-control" placeholder="Select an option" />
       </div>
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <span class="input-group-text" id="basic-addon3">Business Id</span>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text" id="basic-addon3">AP Service root URL</span>
         </div>
-        <input type="integer" value={this.state.businessId} onChange={this.businessIdChanged} class="form-control" id="business-id" aria-describedby="basic-addon3"/>
+        <input type="text" value={this.state.url} onChange={this.urlChanged} className="form-control" id="root-url" aria-describedby="basic-addon3"/>
+      </div>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text" id="basic-addon3">API Key</span>
+        </div>
+        <input type="text" value={this.state.apiKey} onChange={this.apiKeyChanged} className="form-control" id="api-key" aria-describedby="basic-addon3"/>
+      </div>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text" id="basic-addon3">Business Id</span>
+        </div>
+        <input type="integer" value={this.state.businessId} onChange={this.businessIdChanged} className="form-control" id="business-id" aria-describedby="basic-addon3"/>
       </div>
       <Form schema={this.state.schema}
               onChange={this.dataChange}
@@ -157,11 +268,11 @@ class App extends Component
           <div>
             {this.state.onboarded ? (
               <div>
-              <button onClick={this.updateBusiness} class="btn btn-primary">Update</button>
-              <button onClick={this.offboardBusiness} type="submit" class="btn btn-danger">Offboard</button>
+              <button onClick={this.updateBusiness} className="btn btn-primary">Update</button>
+              <button onClick={this.offboardBusiness} type="submit" className="btn btn-danger">Offboard</button>
               </div>
             ): (
-              <button onClick={this.onboardBusiness} class="btn btn-primary">Onboard</button>
+              <button onClick={this.onboardBusiness} className="btn btn-primary">Onboard</button>
             )}
           </div>
       </Form>
