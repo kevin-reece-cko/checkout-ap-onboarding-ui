@@ -36,6 +36,15 @@ class App extends Component
           url: 'http://qa-gateway-internal.cko.lon/giropay-internal/',
           apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
         }
+      },
+      'Production': {
+        'Klarna': {
+          url: 'http://localhost:5050',
+          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083',
+          defaults: {
+            "klarna_merchant_id": "prod id example"
+          }
+        }
       }
     }
 
@@ -208,7 +217,7 @@ class App extends Component
     } else {
       requestParameters = parametersSchema;
     }
-    this._setPropertyExamplesAsUiDefault(requestParameters);
+    this._setPropertyUiDefaults(requestParameters);
     return requestParameters;
   };
 
@@ -224,10 +233,12 @@ class App extends Component
     return mergedParameters;
   }
 
-  _setPropertyExamplesAsUiDefault = (requestParameters) => {
+  _setPropertyUiDefaults = (requestParameters) => {
+    const apSettings = this.environmentSettings[this.state.environment][this.state.apType];
+    let settingsDefaults = apSettings.defaults || {};
     for(var propertyName in requestParameters.properties) {
       const property = requestParameters.properties[propertyName];
-      property.default = property.default || property.example;
+      property.default = settingsDefaults[propertyName] || property.default || property.example;
     }
   }
 
