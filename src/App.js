@@ -2,57 +2,18 @@ import React, { Component } from 'react';
 import Form from 'react-jsonschema-form';
 import axios from 'axios';
 import Dropdown from 'react-dropdown'
+import appSettings from './appSettings.json';
 
 import './App.css';
 import 'react-dropdown/style.css'
 
 class App extends Component
 {
-  environmentSettings = {
-      'Local': {
-        'Klarna': {
-          url: 'http://localhost:5050',
-          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
-        }, 
-        'iDEAL': {
-          url: 'http://localhost:5051',
-          apiKey: 'fc06ac3a-f3b0-4656-9e05-61cb8129c621'
-        }, 
-        'GiroPay': {
-          url: 'http://localhost:5052',
-          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
-        }
-      },
-      'QA': {
-        'Klarna': {
-          url: 'http://qa-gateway-internal.cko.lon/klarna-internal/',
-          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
-        }, 
-        'iDEAL': {
-          url: 'http://qa-gateway-internal.cko.lon/ideal-internal/',
-          apiKey: 'fc06ac3a-f3b0-4656-9e05-61cb8129c621'
-        }, 
-        'GiroPay': {
-          url: 'http://qa-gateway-internal.cko.lon/giropay-internal/',
-          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
-        }
-      },
-      'Production': {
-        'Klarna': {
-          url: 'http://localhost:5050',
-          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083',
-          defaults: {
-            "klarna_merchant_id": "prod id example"
-          }
-        }
-      }
-    }
-
   constructor(props) {
     super(props);
     const defaultEnvironment = 'Local';
     const defaultApType = 'Klarna';
-    const selectedApSettings = this.environmentSettings[defaultEnvironment][defaultApType];
+    const selectedApSettings = appSettings[defaultEnvironment][defaultApType];
     this.state = {
       environment: defaultEnvironment, 
       apType: defaultApType, 
@@ -138,7 +99,7 @@ class App extends Component
   log = (type) => console.log.bind(console, type);
 
   _setStateForEnvironmentAp = async (environment, apType) => {
-    const selectedApSettings = this.environmentSettings[environment][apType];
+    const selectedApSettings = appSettings[environment][apType];
     if (selectedApSettings) {
       await this.setState({...this.state, 
         environment: environment, 
@@ -155,11 +116,11 @@ class App extends Component
   }
 
   _getEnvironmentOptions() {
-    return Object.keys(this.environmentSettings);
+    return Object.keys(appSettings);
   }
   
   _getApTypeOptions() {
-    return Object.keys(this.environmentSettings[this.state.environment]);
+    return Object.keys(appSettings[this.state.environment]);
   }
 
   _getSchema = async () => {
@@ -234,7 +195,7 @@ class App extends Component
   }
 
   _setPropertyUiDefaults = (requestParameters) => {
-    const apSettings = this.environmentSettings[this.state.environment][this.state.apType];
+    const apSettings = appSettings[this.state.environment][this.state.apType];
     let settingsDefaults = apSettings.defaults || {};
     for(var propertyName in requestParameters.properties) {
       const property = requestParameters.properties[propertyName];
