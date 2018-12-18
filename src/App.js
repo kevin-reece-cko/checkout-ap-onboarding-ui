@@ -17,6 +17,10 @@ class App extends Component
         'iDEAL': {
           url: 'http://localhost:5051',
           apiKey: 'fc06ac3a-f3b0-4656-9e05-61cb8129c621'
+        }, 
+        'GiroPay': {
+          url: 'http://localhost:5052',
+          apiKey: '084b7fa3-8d81-46e3-aba2-66efb80fb083'
         }
       },
       'QA': {
@@ -80,7 +84,7 @@ class App extends Component
   };
 
   dataChange = async (event) => {
-    await this.setState({...this.state, data: event.formData});
+    this.setState({...this.state, data: event.formData});
   }
 
   onboardBusiness = async (event) => {
@@ -159,7 +163,7 @@ class App extends Component
     this.setState({
       ...this.state, 
       onboarded: onboarded,
-      data: onboarded ? businessResponse.data : {},
+      data: onboarded ? businessResponse.data : this._getPropertyDefaults(requestBodySchema),
       schema: requestBodySchema
     });
   }
@@ -225,6 +229,15 @@ class App extends Component
       const property = requestParameters.properties[propertyName];
       property.default = property.default || property.example;
     }
+  }
+
+  _getPropertyDefaults = (schema) => {
+    const data = {}
+    for(var propertyName in schema.properties) {
+      const property = schema.properties[propertyName];
+      data[propertyName] = property.default;
+    }
+    return data;
   }
 
   render() {
