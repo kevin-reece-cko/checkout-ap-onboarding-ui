@@ -171,14 +171,15 @@ class App extends Component
   }
 
   _buildRequestParametersFromSpec = (onboardSpec) => {
-    const parametersSchema = onboardSpec.put.requestBody.content['application/json'].schema;
+    const parametersRequestContent = onboardSpec.put.requestBody.content['application/json'];
+    const parametersSchema = parametersRequestContent.schema;
     let requestParameters;
     if (parametersSchema.allOf) {
       requestParameters = this._mergeAllOfProperties(parametersSchema);
     } else {
       requestParameters = parametersSchema;
     }
-    this._setPropertyUiDefaults(requestParameters);
+    this._setPropertyUiDefaults(requestParameters, parametersRequestContent);
     return requestParameters;
   };
 
@@ -194,13 +195,30 @@ class App extends Component
     return mergedParameters;
   }
 
-  _setPropertyUiDefaults = (requestParameters) => {
+  _setPropertyUiDefaults = (requestParameters, parametersRequestContent) => {
     const apSettings = appSettings[this.state.environment][this.state.apType];
-    let settingsDefaults = apSettings.defaults || {};
+    let settingsDefaults = apSettings ? apSettings.defaults || {} : {};
     for(var propertyName in requestParameters.properties) {
       const property = requestParameters.properties[propertyName];
-      property.default = settingsDefaults[propertyName] || property.default || property.example;
+      property.default = settingsDefaults[propertyName] 
+          || property.default 
+          || property.example
+          || this._getExampleFromRequestBodyExample(parametersRequestContent.schema, propertyName)
+          || this._getExampleFromRequestBodyExample(parametersRequestContent, propertyName);
     }
+  }
+
+  _getExampleFromRequestBodyExample = (parent, propertyName) => {
+    if (parent.example) {
+      return parent.example[propertyName];
+    } 
+    if (parent.examples) {
+      const firstExampleName = Object.keys(parent.examples)[0];
+      if (firstExampleName) {
+        return parent.examples[firstExampleName].value[propertyName];
+      }
+    }
+    return undefined;
   }
 
   _getPropertyDefaults = (schema) => {
