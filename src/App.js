@@ -18,6 +18,7 @@ class App extends Component
       environment: defaultEnvironment, 
       apType: defaultApType, 
       url: selectedApSettings.url, 
+      secretKey: "not implemented",
       apiKey: selectedApSettings.apiKey,
       businessId: 100001,
       onboarded: false,
@@ -40,6 +41,11 @@ class App extends Component
 
   urlChanged = async (event) => {
     await this.setState({...this.state, url: event.target.value});
+    this._getSchema();
+  }
+
+  secretKeyChanged = async (event) => {
+    await this.setState({...this.state, secretKey: event.target.value});
     this._getSchema();
   }
 
@@ -247,21 +253,36 @@ class App extends Component
       </div>
       <div className="input-group mb-3">
         <div className="input-group-prepend">
-          <span className="input-group-text" id="basic-addon3">AP Service root URL</span>
+          <span className="input-group-text" id="basic-addon3">Merchant Channel Secret Key</span>
         </div>
-        <input type="text" value={this.state.url} onChange={this.urlChanged} className="form-control" id="root-url" aria-describedby="basic-addon3"/>
+        <input type="text" value={this.state.secretKey} onChange={this.secretKeyChanged} className="form-control" id="secret-key" aria-describedby="basic-addon3"/>
       </div>
-      <div className="input-group mb-3">
-        <div className="input-group-prepend">
-          <span className="input-group-text" id="basic-addon3">API Key</span>
+      <div>
+        <a className="btn btn-link" data-toggle="collapse" href="#ManualOptions" role="button" aria-expanded="false" aria-controls="ManualOptions">
+          Show/hide manual options
+        </a>
+        <div className="collapse" id="ManualOptions">
+          <div className="card card-body">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text" id="basic-addon3">AP Service root URL</span>
+              </div>
+              <input type="text" value={this.state.url} onChange={this.urlChanged} className="form-control" id="root-url" aria-describedby="basic-addon3"/>
+            </div>
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text" id="basic-addon3">API Key</span>
+              </div>
+              <input type="text" value={this.state.apiKey} onChange={this.apiKeyChanged} className="form-control" id="api-key" aria-describedby="basic-addon3"/>
+            </div>
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text" id="basic-addon3">Business Id</span>
+              </div>
+              <input type="integer" value={this.state.businessId} onChange={this.businessIdChanged} className="form-control" id="business-id" aria-describedby="basic-addon3"/>
+            </div>
+          </div>
         </div>
-        <input type="text" value={this.state.apiKey} onChange={this.apiKeyChanged} className="form-control" id="api-key" aria-describedby="basic-addon3"/>
-      </div>
-      <div className="input-group mb-3">
-        <div className="input-group-prepend">
-          <span className="input-group-text" id="basic-addon3">Business Id</span>
-        </div>
-        <input type="integer" value={this.state.businessId} onChange={this.businessIdChanged} className="form-control" id="business-id" aria-describedby="basic-addon3"/>
       </div>
       <Form schema={this.state.schema}
               onChange={this.dataChange}
@@ -270,9 +291,9 @@ class App extends Component
               formData={this.state.data}>
           <div>
             {this.state.onboarded ? (
-              <div>
-              <button onClick={this.updateBusiness} className="btn btn-primary">Update</button>
-              <button onClick={this.offboardBusiness} type="submit" className="btn btn-danger">Offboard</button>
+              <div className="btn btn-group">
+                <button onClick={this.updateBusiness} className="btn btn-primary">Update</button>
+                <button onClick={this.offboardBusiness} type="submit" className="btn btn-danger">Offboard</button>
               </div>
             ): (
               <button onClick={this.onboardBusiness} className="btn btn-primary">Onboard</button>
